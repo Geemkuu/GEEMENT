@@ -46,4 +46,5 @@ This file contains the developer and setup details for the project.
 ## Hosting notes
 
 - Frontend can be deployed as static assets from `frontend/dist`.
-- Backend requires a Node.js host and accepts JSON requests via Express.
+- A GitHub Action is included to deploy `frontend/dist` to `gh-pages` on push to `main`.
+- Backend requires a separate Node.js host or a full-stack platform. GitHub Pages cannot run the Express API.

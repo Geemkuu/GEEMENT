@@ -29,7 +29,11 @@ Welcome to the community tournament playground for 20-30 eFootball managers! Thi
 ## 📌 Hosted on GitHub
 
 This repo is ready for GitHub-friendly workflows and repository showcase. For the live frontend experience, the built static site lives in `frontend/dist`.
+## 🚀 GitHub hosting ready
 
+The frontend is set up to deploy automatically to GitHub Pages using a workflow in `.github/workflows/deploy.yml`.
+
+> Note: GitHub Pages can host the static React frontend, but the backend API needs a separate Node host or a full-stack platform if you want the live league engine online.
 ## 📎 Need the setup details?
 
 All of the technical installation and developer notes were moved to `techshit.txt` so this page stays streamlined and friendly.
