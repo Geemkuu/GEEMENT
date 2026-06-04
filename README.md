@@ -33,7 +33,7 @@ This repo is ready for GitHub-friendly workflows and repository showcase. For th
 
 The frontend is set up to deploy automatically to GitHub Pages using a workflow in `.github/workflows/deploy.yml`.
 
-> Note: GitHub Pages can host the static React frontend, but the backend API needs a separate Node host or a full-stack platform if you want the live league engine online.
+> Note: This version is now fully static for GitHub Pages. League state is stored in the browser via local storage, so the live site runs entirely on GitHub without an external backend.
 ## 📎 Need the setup details?
 
 All of the technical installation and developer notes were moved to `techshit.txt` so this page stays streamlined and friendly.

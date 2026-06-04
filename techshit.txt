@@ -47,4 +47,5 @@ This file contains the developer and setup details for the project.
 
 - Frontend can be deployed as static assets from `frontend/dist`.
 - A GitHub Action is included to deploy `frontend/dist` to `gh-pages` on push to `main`.
-- Backend requires a separate Node.js host or a full-stack platform. GitHub Pages cannot run the Express API.
+- The live GitHub-hosted version now uses browser local storage for league state instead of the Express API.
+- The backend folder is kept for reference, but the GitHub Pages site does not rely on it.

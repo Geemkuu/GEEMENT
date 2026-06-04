@@ -1,24 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { AppContext } from '../context/AppContext';
 
 function ProfilePage() {
   const { id } = useParams();
-  const [team, setTeam] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { teams, players, loading } = useContext(AppContext);
 
-  useEffect(() => {
-    async function load() {
-      const res = await fetch(`/api/teams/${id}`);
-      const data = await res.json();
-      if (data.success) {
-        setTeam(data.team);
-        setPlayers(data.players);
-      }
-      setLoading(false);
-    }
-    load();
-  }, [id]);
+  const team = teams.find((item) => item.id === Number(id));
+  const teamPlayers = players.filter((player) => player.team_id === Number(id));
 
   if (loading) return <div>Loading profile...</div>;
   if (!team) return <div>Profile not found.</div>;
@@ -33,7 +22,11 @@ function ProfilePage() {
             <p className="mt-2 text-slate-300">Manager: {team.manager_name}</p>
           </div>
           <div className="h-32 w-32 overflow-hidden rounded-3xl border border-slate-700 bg-slate-900">
-            {team.badge ? <img src={team.badge} alt="Team badge" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-sm text-slate-400">No badge</div>}
+            {team.badge ? (
+              <img src={team.badge} alt="Team badge" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-slate-400">No badge</div>
+            )}
           </div>
         </div>
       </div>
@@ -41,15 +34,15 @@ function ProfilePage() {
         <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-glow">
           <h2 className="text-2xl font-semibold text-white">Stats Overview</h2>
           <div className="mt-5 space-y-4 text-slate-300">
-            <p>Matches played and goals will update automatically as the league progresses.</p>
-            <p>Top performing virtual players live inside the team roster area below.</p>
+            <p>Matches played and goals update live as the league advances.</p>
+            <p>Check your roster for the club's top scorers and breakout performers.</p>
           </div>
         </div>
         <div className="rounded-3xl border border-slate-800 bg-panel p-6 shadow-glow">
           <h2 className="text-2xl font-semibold text-white">Line-up</h2>
-          <p className="mt-2 text-sm text-slate-400">Virtual roster built for goal-tracking and leaderboards.</p>
+          <p className="mt-2 text-sm text-slate-400">Virtual roster built for goal-tracking and leaderboard competition.</p>
           <div className="mt-6 space-y-3">
-            {players.map((player) => (
+            {teamPlayers.map((player) => (
               <div key={player.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>

@@ -1,10 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 
-const ADMIN_KEY = 'efootball-admin';
-
 function AdminPage() {
-  const { fixtures, table, leaderboard, invite, loadApp, fetchJson } = useContext(AppContext);
+  const { fixtures, table, leaderboard, invite, loadApp, updateMatchResult, generateNewInvite } = useContext(AppContext);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
@@ -20,35 +18,27 @@ function AdminPage() {
     setSelectedMatch(match);
     setHomeScore(match.home_score);
     setAwayScore(match.away_score);
-    setScorers([{ playerName: '', teamId: match.home_team_id, goals: 1 }, { playerName: '', teamId: match.away_team_id, goals: 1 }]);
+    setScorers([
+      { playerName: '', teamId: match.home_team_id, goals: 1 },
+      { playerName: '', teamId: match.away_team_id, goals: 1 }
+    ]);
   };
 
-  const postResult = async () => {
+  const postResult = () => {
     if (!selectedMatch) return;
     setStatus('Saving result...');
     const body = { homeScore, awayScore, scorers: scorers.filter((scorer) => scorer.playerName.trim()) };
-    const res = await fetchJson(`/api/fixtures/${selectedMatch.id}/result?adminKey=${ADMIN_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    const res = updateMatchResult(selectedMatch.id, body.homeScore, body.awayScore, body.scorers);
     setStatus(res.message);
     if (res.success) {
-      await loadApp();
+      loadApp();
     }
   };
 
-  const generateNewInvite = async () => {
-    const token = `efootball${Math.floor(1000 + Math.random() * 9000)}`;
-    const res = await fetchJson(`/api/admin/invite?adminKey=${ADMIN_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    if (res.success) {
-      setInviteToken(res.token);
-      setStatus('New invite generated. Share the new registration link.');
-    }
+  const handleGenerateInvite = () => {
+    const res = generateNewInvite();
+    setInviteToken(res.token);
+    setStatus('New invite generated. Share the new registration link.');
   };
 
   return (
@@ -62,7 +52,7 @@ function AdminPage() {
           <div className="rounded-3xl border border-slate-800 bg-slate-950/70 px-6 py-4 text-slate-200">
             <p className="text-sm uppercase text-slate-400">Current invite</p>
             <p className="mt-2 text-lg text-neon">/join?token={inviteToken}</p>
-            <button onClick={generateNewInvite} className="mt-4 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-accent/90">
+            <button onClick={handleGenerateInvite} className="mt-4 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-accent/90">
               Generate new invite
             </button>
           </div>

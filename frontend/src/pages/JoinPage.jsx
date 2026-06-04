@@ -11,7 +11,7 @@ const presetBadges = [
 
 function JoinPage() {
   const [searchParams] = useSearchParams();
-  const { fetchJson } = useContext(AppContext);
+  const { invite, registerTeam, loading } = useContext(AppContext);
   const [inviteValid, setInviteValid] = useState(false);
   const [checking, setChecking] = useState(true);
   const [managerName, setManagerName] = useState('');
@@ -21,20 +21,18 @@ function JoinPage() {
   const [message, setMessage] = useState('');
 
   const token = searchParams.get('token');
+  const selectedBadge = uploadedBadge || badge;
 
   useEffect(() => {
+    if (loading) return;
     if (!token) {
       setInviteValid(false);
       setChecking(false);
       return;
     }
-    fetchJson(`/api/invite?token=${token}`).then((res) => {
-      setInviteValid(res.valid);
-      setChecking(false);
-    });
-  }, [token]);
-
-  const selectedBadge = uploadedBadge || badge;
+    setInviteValid(token === invite.token);
+    setChecking(false);
+  }, [token, invite, loading]);
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -44,14 +42,10 @@ function JoinPage() {
     reader.readAsDataURL(file);
   };
 
-  const submitTeam = async (event) => {
+  const submitTeam = (event) => {
     event.preventDefault();
     setMessage('Registering your team…');
-    const res = await fetchJson('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ managerName, teamName, badge: selectedBadge, token })
-    });
+    const res = registerTeam({ managerName, teamName, badge: selectedBadge, token });
     setMessage(res.message);
     if (res.success) {
       setManagerName('');
