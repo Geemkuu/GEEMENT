@@ -1,6 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 
+const ADMIN_PASSWORD = 'leagueadmin';
+
 function AdminPage() {
   const { fixtures, table, leaderboard, invite, loadApp, updateMatchResult, generateNewInvite } = useContext(AppContext);
   const [selectedMatch, setSelectedMatch] = useState(null);
@@ -9,6 +11,9 @@ function AdminPage() {
   const [scorers, setScorers] = useState([{ playerName: '', teamId: null, goals: 1 }, { playerName: '', teamId: null, goals: 1 }]);
   const [status, setStatus] = useState('');
   const [inviteToken, setInviteToken] = useState(invite.token);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authorized, setAuthorized] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
     setInviteToken(invite.token);
@@ -40,6 +45,42 @@ function AdminPage() {
     setInviteToken(res.token);
     setStatus('New invite generated. Share the new registration link.');
   };
+
+  const handleAdminSubmit = (event) => {
+    event.preventDefault();
+    if (adminPassword.trim() === ADMIN_PASSWORD) {
+      setAuthorized(true);
+      setAuthError('');
+    } else {
+      setAuthError('Incorrect admin password.');
+    }
+  };
+
+  if (!authorized) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-3xl border border-slate-800 bg-panel p-10 shadow-glow">
+        <div className="mb-8 text-center">
+          <p className="text-sm uppercase tracking-[0.3em] text-neon">Admin access</p>
+          <h1 className="mt-3 text-4xl font-semibold text-white">Secure admin panel</h1>
+          <p className="mt-4 text-slate-300">Enter the admin password to view league controls and update fixtures.</p>
+        </div>
+        <form onSubmit={handleAdminSubmit} className="space-y-6">
+          <label className="block text-sm font-medium text-slate-300">Admin password</label>
+          <input
+            type="password"
+            value={adminPassword}
+            onChange={(e) => setAdminPassword(e.target.value)}
+            className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-neon focus:ring-2 focus:ring-neon/20"
+            placeholder="Enter admin password"
+          />
+          <button type="submit" className="w-full rounded-full bg-neon px-6 py-3 text-sm font-semibold text-slate-950 transition hover:brightness-110">
+            Unlock admin controls
+          </button>
+          {authError && <p className="text-sm text-red-400">{authError}</p>}
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
