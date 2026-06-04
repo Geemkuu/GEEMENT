@@ -204,6 +204,8 @@ export function AppProvider({ children }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [hallOfFame, setHallOfFame] = useState({});
   const [invite, setInvite] = useState(DEFAULT_INVITE);
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const computeState = useCallback((teamsState, playersState, matchesState) => {
@@ -222,36 +224,64 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  const hashPassword = (password) => btoa(password || '');
+  const createUserId = () => Date.now() + Math.floor(Math.random() * 1000);
+  const createStorageState = () => ({
+    teams: [],
+    players: [],
+    matches: [],
+    invite: DEFAULT_INVITE,
+    users: [],
+    currentUser: null
+  });
+
   const syncState = useCallback(
-    (teamsState, playersState, matchesState, inviteState) => {
+    (teamsState, playersState, matchesState, inviteState, usersState, currentUserState) => {
       const computed = computeState(teamsState, playersState, matchesState);
       setTeams(teamsState);
       setPlayers(playersState);
       setMatches(computed.matches);
       setInvite(inviteState);
+      setUsers(usersState);
+      setCurrentUser(currentUserState);
       setTable(computed.table);
       setLeaderboard(computed.leaderboard);
       setHallOfFame(computed.hallOfFame);
       setFixtures(computed.fixtures);
-      persistState({ teams: teamsState, players: playersState, matches: computed.matches, invite: inviteState });
+      persistState({
+        teams: teamsState,
+        players: playersState,
+        matches: computed.matches,
+        invite: inviteState,
+        users: usersState,
+        currentUser: currentUserState
+      });
     },
     [computeState]
   );
 
   const initApp = useCallback(() => {
     setLoading(true);
-    const saved = loadFromStorage();
-    const data = saved || { teams: [], players: [], matches: [], invite: DEFAULT_INVITE };
-    const computed = computeState(data.teams, data.players, data.matches);
-    setTeams(data.teams);
-    setPlayers(data.players);
+    const saved = loadFromStorage() || createStorageState();
+    const computed = computeState(saved.teams, saved.players, saved.matches);
+    setTeams(saved.teams);
+    setPlayers(saved.players);
     setMatches(computed.matches);
-    setInvite(data.invite || DEFAULT_INVITE);
+    setInvite(saved.invite || DEFAULT_INVITE);
+    setUsers(saved.users || []);
+    setCurrentUser(saved.currentUser || null);
     setTable(computed.table);
     setLeaderboard(computed.leaderboard);
     setHallOfFame(computed.hallOfFame);
     setFixtures(computed.fixtures);
-    persistState({ teams: data.teams, players: data.players, matches: computed.matches, invite: data.invite || DEFAULT_INVITE });
+    persistState({
+      teams: saved.teams,
+      players: saved.players,
+      matches: computed.matches,
+      invite: saved.invite || DEFAULT_INVITE,
+      users: saved.users || [],
+      currentUser: saved.currentUser || null
+    });
     setLoading(false);
   }, [computeState]);
 
@@ -263,9 +293,67 @@ export function AppProvider({ children }) {
 
   const getTeamById = useCallback((id) => teams.find((team) => team.id === Number(id)), [teams]);
   const getPlayersForTeam = useCallback((teamId) => players.filter((player) => player.team_id === Number(teamId)), [players]);
+  const getLoggedUserTeam = useCallback(() => teams.find((team) => team.id === currentUser?.teamId), [teams, currentUser]);
+
+  const loginUser = useCallback(
+    ({ username, password }) => {
+      const found = users.find((user) => user.username === username);
+      if (!found) return { success: false, message: 'No account found. Create one first.' };
+      if (found.password !== hashPassword(password)) return { success: false, message: 'Incorrect password.' };
+      const nextUser = { ...found };
+      syncState(teams, players, matches, invite, users, nextUser);
+      return { success: true, message: 'Welcome back!', currentUser: nextUser };
+    },
+    [invite, matches, players, syncState, teams, users]
+  );
+
+  const signUpUser = useCallback(
+    ({ username, password }) => {
+      if (!username || !password) {
+        return { success: false, message: 'Username and password are required.' };
+      }
+      if (users.some((user) => user.username === username)) {
+        return { success: false, message: 'Username already exists. Choose another.' };
+      }
+      const newUser = {
+        id: createUserId(),
+        username,
+        password: hashPassword(password),
+        favPlayers: [],
+        formation: '',
+        teamId: null,
+        efootballUsername: username,
+        created_at: new Date().toISOString()
+      };
+      const nextUsers = [...users, newUser];
+      syncState(teams, players, matches, invite, nextUsers, newUser);
+      return { success: true, message: 'Account created. Continue to team setup.', currentUser: newUser };
+    },
+    [invite, matches, players, syncState, teams, users]
+  );
+
+  const logoutUser = useCallback(() => {
+    syncState(teams, players, matches, invite, users, null);
+  }, [invite, matches, players, syncState, teams, users]);
+
+  const saveUserProfile = useCallback(
+    ({ favPlayers, formation, efootballUsername }) => {
+      if (!currentUser) return { success: false, message: 'No active user.' };
+      const updatedUser = {
+        ...currentUser,
+        favPlayers: favPlayers || currentUser.favPlayers,
+        formation: formation || currentUser.formation,
+        efootballUsername: efootballUsername || currentUser.efootballUsername
+      };
+      const nextUsers = users.map((user) => (user.id === updatedUser.id ? updatedUser : user));
+      syncState(teams, players, matches, invite, nextUsers, updatedUser);
+      return { success: true, message: 'Profile saved.', currentUser: updatedUser };
+    },
+    [currentUser, invite, matches, players, syncState, teams, users]
+  );
 
   const registerTeam = useCallback(
-    ({ managerName, teamName, badge, token }) => {
+    ({ managerName, teamName, badge, token, favPlayers = [], formation = '', efootballUsername = '' }) => {
       if (!managerName || !teamName || !token) {
         return { success: false, message: 'Please complete all required fields.' };
       }
@@ -291,74 +379,37 @@ export function AppProvider({ children }) {
         token,
         created_at: new Date().toISOString()
       };
+
       const nextPlayers = [...players, ...createStarterPlayers(teamName, teamId)];
       const nextTeams = [...teams, newTeam];
-      syncState(nextTeams, nextPlayers, matches, invite);
-      return { success: true, message: 'Team registered successfully.', teamId };
-    },
-    [invite, matches, players, teams, syncState]
-  );
+      let nextUsers = users;
+      let nextCurrent = currentUser;
 
-  const updateMatchResult = useCallback(
-    (matchId, homeScore, awayScore, scorers) => {
-      const matchIndex = matches.findIndex((match) => match.id === Number(matchId));
-      if (matchIndex < 0) {
-        return { success: false, message: 'Match not found.' };
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          teamId,
+          favPlayers,
+          formation,
+          efootballUsername: efootballUsername || currentUser.efootballUsername,
+          badge
+        };
+        nextUsers = users.map((user) => (user.id === updatedUser.id ? updatedUser : user));
+        nextCurrent = updatedUser;
       }
 
-      const currentMatch = matches[matchIndex];
-      const oldScorers = Array.isArray(currentMatch.scored_detail) ? currentMatch.scored_detail : [];
-      const newScorers = (Array.isArray(scorers) ? scorers : [])
-        .filter((item) => item.playerName && item.teamId)
-        .map((item) => ({
-          playerName: item.playerName,
-          teamId: Number(item.teamId),
-          goals: Number(item.goals)
-        }));
-
-      const nextPlayers = players.map((player) => ({ ...player }));
-      const adjust = (entries, multiplier) => {
-        entries.forEach((entry) => {
-          if (!entry.playerName) return;
-          const existing = nextPlayers.find(
-            (player) => player.team_id === Number(entry.teamId) && player.player_name === entry.playerName
-          );
-          if (existing) {
-            existing.goals = Math.max(0, existing.goals + multiplier * Number(entry.goals));
-          } else if (multiplier > 0) {
-            nextPlayers.push({
-              id: Date.now() + Math.random(),
-              team_id: Number(entry.teamId),
-              player_name: entry.playerName,
-              goals: Number(entry.goals)
-            });
-          }
-        });
-      };
-
-      adjust(oldScorers, -1);
-      adjust(newScorers, 1);
-
-      const nextMatches = [...matches];
-      nextMatches[matchIndex] = {
-        ...currentMatch,
-        home_score: Number(homeScore),
-        away_score: Number(awayScore),
-        scored_detail: newScorers
-      };
-
-      syncState(teams, nextPlayers, nextMatches, invite);
-      return { success: true, message: 'Match updated successfully.' };
+      syncState(nextTeams, nextPlayers, matches, invite, nextUsers, nextCurrent);
+      return { success: true, message: 'Team registered successfully.', teamId };
     },
-    [invite, matches, players, syncState, teams]
+    [currentUser, invite, matches, players, syncState, teams, users]
   );
 
   const generateNewInvite = useCallback(() => {
     const token = `efootball${Math.floor(1000 + Math.random() * 9000)}`;
     const nextInvite = { token, link: `/join?token=${token}` };
-    syncState(teams, players, matches, nextInvite);
+    syncState(teams, players, matches, nextInvite, users, currentUser);
     return nextInvite;
-  }, [matches, players, teams, syncState]);
+  }, [currentUser, matches, players, syncState, teams, users]);
 
   const value = {
     teams,
@@ -368,14 +419,21 @@ export function AppProvider({ children }) {
     leaderboard,
     hallOfFame,
     invite,
+    users,
+    currentUser,
     loading,
     initApp,
     loadApp: initApp,
+    loginUser,
+    signUpUser,
+    logoutUser,
+    saveUserProfile,
     registerTeam,
     updateMatchResult,
     generateNewInvite,
     getTeamById,
     getPlayersForTeam,
+    getLoggedUserTeam,
     verifyInvite
   };
 
