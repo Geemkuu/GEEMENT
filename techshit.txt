@@ -1,0 +1,49 @@
+# Technical Setup Notes for eFootball Tournament Hub
+
+This file contains the developer and setup details for the project.
+
+## Project structure
+
+- `/frontend` — React SPA with Vite, Tailwind CSS, React Router, and frontend app logic.
+- `/backend` — Node.js / Express API with SQLite to persist teams, matches, players, and invite tokens.
+
+## Local development
+
+1. Install backend dependencies:
+   ```bash
+   cd backend
+   npm install
+   ```
+2. Install frontend dependencies:
+   ```bash
+   cd ../frontend
+   npm install
+   ```
+3. Start the backend server:
+   ```bash
+   cd ../backend
+   npm run start
+   ```
+4. Start the frontend app:
+   ```bash
+   cd ../frontend
+   npm run dev
+   ```
+
+## Admin API
+
+- Admin-only endpoints use `adminKey=efootball-admin`.
+
+## Invite flow
+
+- Registration is enabled through invite links like `/join?token=efootball2026`.
+
+## Build
+
+- Frontend production build: `npm run build` from `/frontend`.
+- Backend uses SQLite stored in `/backend/data/league.sqlite`.
+
+## Hosting notes
+
+- Frontend can be deployed as static assets from `frontend/dist`.
+- Backend requires a Node.js host and accepts JSON requests via Express.

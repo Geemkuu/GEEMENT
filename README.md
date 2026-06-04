@@ -1,45 +1,39 @@
-# eFootball Tournament Hub
+# ⚽ eFootball League Hub
 
-A full-stack league and knockout tournament manager built with React (Vite), Tailwind CSS, and Node.js / Express with SQLite.
+Welcome to the community tournament playground for 20-30 eFootball managers! This repo is the home of a sleek league dashboard, team onboarding flow, golden boot chase, and knockout bracket drama.
 
-## Project structure
+## 🎮 What you can explore
 
-- `/frontend` — React SPA with league dashboard, join flow, profile views, and admin controls.
-- `/backend` — Express API with SQLite storage for teams, matches, players, and invite tokens.
+- Create your team using a shareable invite link like `/join?token=efootball2026`
+- Pick a badge or upload your own custom club crest
+- Track live league standings with goals, GD, and points
+- See the leaderboard for the hottest goal scorers
+- Watch the knockout bracket take shape once the league stage is ready
+- Visit a dedicated profile page for every team
 
-## Setup
+## ✨ Why this project rocks
 
-1. Open two terminals.
-2. Install backend dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-3. Install frontend dependencies:
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-4. Start the backend server:
-   ```bash
-   cd ../backend
-   npm run start
-   ```
-5. Start the frontend app:
-   ```bash
-   cd ../frontend
-   npm run dev
-   ```
+- Designed for small eFootball communities and club rivalries
+- Clean dark UI with neon accents for premium sports energy
+- Real-time updating league table and scorer tracking
+- Admin panel for match score updates and player goal entries
+- Hall of Fame section highlighting the current leader and top scorer
 
-## Admin token
+## 🚀 Quick tour
 
-- Use `adminKey=efootball-admin` for admin-only endpoints.
+- `Home` — dashboard with standings, fixtures, leaderboard, and bracket
+- `Join` — register your squad using the invite URL
+- `Team profile` — view manager details, badge, and player stats
+- `Admin` — update matches, scores, and generate fresh invites
 
-## Features
+## 📌 Hosted on GitHub
 
-- Invite link registration via `/join?token=efootball2026`
-- Team onboarding with manager name, team badge preset, and local image upload.
-- League standings with automatic table calculations.
-- Admin match score entry and scorer tracking.
-- Golden Boot leaderboard and Hall of Fame stats.
-- Knockout bracket support seeded from league standings.
+This repo is ready for GitHub-friendly workflows and repository showcase. For the live frontend experience, the built static site lives in `frontend/dist`.
+
+## 📎 Need the setup details?
+
+All of the technical installation and developer notes were moved to `techshit.txt` so this page stays streamlined and friendly.
+
+---
+
+> Enjoy the league, share the invite, and may the best squad win! 🏆🔥
